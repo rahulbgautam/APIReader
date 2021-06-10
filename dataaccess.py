@@ -1,4 +1,4 @@
-import pandas as pd
+#import pandas as pd
 import json
 import csv
 import os
@@ -10,7 +10,7 @@ folder_input = 'input/'
 file_path = os.path.join(folder_input, "canadian_vin_list.csv") #TODO: Get as commandline input 
 
 
-csv_data = pd.read_csv(file_path)
+# csv_data = pd.read_csv(file_path)
 
 def init_csv(output_csv):
         now  = datetime.now()
