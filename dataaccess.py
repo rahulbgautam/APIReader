@@ -7,7 +7,7 @@ import time, sys
 
 
 folder_input = 'input/'
-file_path = os.path.join(folder_input, "VINs.csv") #TODO: Get as commandline input 
+file_path = os.path.join(folder_input, "canadian_vin_list.csv") #TODO: Get as commandline input 
 
 
 csv_data = pd.read_csv(file_path)
@@ -34,6 +34,12 @@ def read_from_csv():
 
     except Exception as ex:
         print(ex)
+
+def read_bbdata_from_csv():
+    result = csv_data
+    #print(result)
+    # result = jsonify_result(result)
+    return result
 
 
 def read_vin_from_csv():

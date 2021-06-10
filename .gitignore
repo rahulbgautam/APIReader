@@ -1,1 +1,8 @@
 __pycache__
+/input
+/output
+*.pyc
+input/*.csv
+BBData*
+motoscrap.py
+interval_timer.py

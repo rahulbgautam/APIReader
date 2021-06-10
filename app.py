@@ -4,6 +4,7 @@ import os
 import csv
 from dataaccess import read_from_csv,folder_input,init_csv
 import json
+              
 
 folder_output = 'output/'
 output_file_path = os.path.join(folder_output, init_csv("VINData"))
@@ -51,7 +52,11 @@ def call_vin_decode(data):
             # print("body_data:",vin_data["Body"])
             if len(vin_data["Body"]) > 0:
                 body_data = vin_data["Body"][0]
-                write_to_csv(vin,body_data['Model_Year'],body_data['Make'],body_data['Model'],body_data['Salvage_Type'],body_data['Body_Style_Name'],body_data['Series_Name'],body_data['EngineInformation'],body_data['Cylinders'],body_data['Fuel_Type'],body_data['Base_Shipping_Weight'],body_data['CountryOfOrigin'],body_data['Segmentation_Description'],body_data['Transmission_Type_Description'],body_data['TransmissionSpeed'],"",False)
+                bbdatafin = getBBData(vin,body_data['Model_Year'],body_data['Make'],body_data['Model'],body_data['Series_Name'])
+                wholeacv = (bbdatafin[0])
+                retailacv = (bbdatafin[1])
+
+                write_to_csv(vin,body_data['Model_Year'],body_data['Make'],body_data['Model'],body_data['Salvage_Type'],body_data['Body_Style_Name'],body_data['Series_Name'],body_data['EngineInformation'],body_data['Cylinders'],body_data['Fuel_Type'],body_data['Base_Shipping_Weight'],body_data['CountryOfOrigin'],body_data['Segmentation_Description'],body_data['Transmission_Type_Description'],body_data['TransmissionSpeed'],wholeacv,retailacv,False)
             else:
                 write_to_error_csv(vin,False)
             # print(type(body_data['Model_Year']))
@@ -65,16 +70,62 @@ def call_vin_decode(data):
         print(error)
         pass
     
-       
+def getBBData(vin,year,make,model,series):
 
-def write_to_csv(vin="", modelyear="", makename="", modelname="", salvagetype="", bodystylename="", seriesname="", EngineInformation="", cylinders="", FuelTypeDescription="", BaseShippingWeight="", CountryOfOrigin="", SegmentationDescription="", TransmissionDescription="", TransmissionSpeed="", BlackBookValue ="", Is_Header=True ):
+    bbdata = post_BB(vin,year,make,model,series)
+    wholeacv = 0
+    retailacv = 0
+    if len(bbdata["Body"]) > 0:
+        body_data = bbdata["Body"][0]
+        wholeacv = body_data['WholeACV']
+        retailacv = body_data['RetailACV']
+    return wholeacv,retailacv
+
+def post_BB(vin,year,make,model,series):
+    try:
+        #'http://localhost:54111/ImageUpload/AddVehicleMedia'
+        # vin = 'JH4CL968X8C019721' #'JAFSR175LDM465808'
+        
+
+        server = 'ievm'
+        url = 'http://'+server+'.iaai.com' #base URL
+        path = '/api/vehiclevaluations' #get method for API
+        headers ={'ApplicationId':'Guest','AuthenticationKey':'GuestPwd','Content-Type':'application/json'}
+   
+        # file_name = 'test.png' #File name should be in the same folder where u run the script from
+        # upload_index = start_index
+        values = { 'vehicles':[{
+                       
+                        'vin':vin,
+                        'year':year,
+                        'make':make,
+                        'model':model,
+                        'series':series,
+                       
+                     
+                    }
+                ],
+                "forceAPICheck":'true'
+                }
+
+        # {'vin':vin,'FullDetails':1,'vendor':'IHS'} #Payload would vary for diffrent APIs
+        # multiple_files = [('file', (file_name, open(file_name, 'rb'), 'image/png'))]
+        # r = rs.post(url+path, data=values,files=multiple_files)
+        # print(url+path)
+        r = rs.post(url+path,headers=headers,data=json.dumps(values))
+        # print(r.content) #display the reponse from Api call 
+        return json.loads(r.content)
+    except Exception as error:
+        print(error)
+
+def write_to_csv(vin="", modelyear="", makename="", modelname="", salvagetype="", bodystylename="", seriesname="", EngineInformation="", cylinders="", FuelTypeDescription="", BaseShippingWeight="", CountryOfOrigin="", SegmentationDescription="", TransmissionDescription="", TransmissionSpeed="", BlackBookWACVValue ="",BlackBookRACVValue ="", Is_Header=True ):
         # print(output_file_path)
-        with open(output_file_path+".txt", mode='a',newline='') as csv_file:
-                fieldnames = ["vin","modelyear","makename","modelname","salvagetype","bodystylename","seriesname","EngineInformation","cylinders","FuelTypeDescription","BaseShippingWeight","CountryOfOrigin","SegmentationDescription","TransmissionDescription","TransmissionSpeed","BlackBook Value"]
+        with open(output_file_path+".csv", mode='a',newline='') as csv_file:
+                fieldnames = ["vin","modelyear","makename","modelname","salvagetype","bodystylename","seriesname","EngineInformation","cylinders","FuelTypeDescription","BaseShippingWeight","CountryOfOrigin","SegmentationDescription","TransmissionDescription","TransmissionSpeed","BlackBook Whole ACV","BlackBook Retail ACV"]
                 
                 writer = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL,dialect='excel-tab')
                 if(not Is_Header):
-                    csv_data= [vin , modelyear , makename , modelname , salvagetype , bodystylename , seriesname , EngineInformation , cylinders , FuelTypeDescription , BaseShippingWeight , CountryOfOrigin , SegmentationDescription , TransmissionDescription , TransmissionSpeed , BlackBookValue]
+                    csv_data= [vin , modelyear , makename , modelname , salvagetype , bodystylename , seriesname , EngineInformation , cylinders , FuelTypeDescription , BaseShippingWeight , CountryOfOrigin , SegmentationDescription , TransmissionDescription , TransmissionSpeed , BlackBookWACVValue,BlackBookRACVValue]
                     # print(type(csv_data))
                     writer.writerow(csv_data)
                 if(Is_Header):
