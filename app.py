@@ -3,7 +3,7 @@ import time
 import os
 import csv
 import json
-              
+from dataaccess import read_from_csv,read_bbdata_from_csv,folder_input,init_csv
 
 main_output_file_path = "main_data"
 main_output_error_path = "main_error"
@@ -12,33 +12,27 @@ price_output_file_path = "price_data"
 owner_output_file_path ="owner_data"
 partner_output_file_path = "partner_data"
 
-folder_input = 'output/'
-main_file_path = os.path.join(folder_input, main_output_file_path)
-error_output_file_path = os.path.join(folder_input, main_output_error_path)
-image_file_path = os.path.join(folder_input, image_output_file_path)
-price_file_path  = os.path.join(folder_input, price_output_file_path)
-owner_file_path = os.path.join(folder_input, owner_output_file_path)
-partner_file_path = os.path.join(folder_input, partner_output_file_path)
+folder_output = 'output/'
+output_file_path = os.path.join(folder_output, init_csv("Canadian_Data_output"))
+error_output_file_path = os.path.join(folder_output, init_csv("Canadian_Data_Error"))
+
 def post_vin(vin):
     try:
-        #/usr/local/bin/python3
-        #'https://api.twistedroad.com/api/v1/motorcycles/search'
-        # page=3
-       # vin = 'JH4CL968X8C019721' #'JAFSR175LDM465808'
+        #'http://localhost:54111/ImageUpload/AddVehicleMedia'
+        # vin = 'JH4CL968X8C019721' #'JAFSR175LDM465808'
         server = 'ievm'
-        
-        url = 'https://api.twistedroad.com' #base URL
-        path = '/api/v1/motorcycles/search' #get method for API
-        headers ={'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:81.0) Gecko/20100101 Firefox/81.0','Connection':'keep-alive','Cache-Control':'max-age=0'}
+        url = 'http://'+server+'.iaai.com' #base URL
+        path = '/api/iaadecodevin' #get method for API
+        headers ={'ApplicationId':'Guest','AuthenticationKey':'GuestPwd'}
         # file_name = 'test.png' #File name should be in the same folder where u run the script from
-        # upload_index = start_indx
-        values = {'page':vin} #Payload would vary for diffrent APIs
+        # upload_index = start_index
+        values = {'vin':vin,'FullDetails':1,'vendor':'IHS'} #Payload would vary for diffrent APIs
         # multiple_files = [('file', (file_name, open(file_name, 'rb'), 'image/png'))]
         # r = rs.post(url+path, data=values,files=multiple_files)
         # print(url+path)
         r = rs.get(url+path,headers=headers,params=values)
         # print(r.content) #display the reponse from Api call 
-        return json.loads(r.content.decode('utf-8'))
+        return json.loads(r.content)
     except Exception as error:
         print(error)
 
@@ -49,21 +43,21 @@ def jsonify_result(df):
 
 def readData():
     # List of Vins
-    # result = read_from_csv()
-    call_vin_decode()
+    result = read_from_csv()
+    call_vin_decode(result)
 
-def call_vin_decode():
-    write_to_main_csv()
+def call_vin_decode(data):
+    write_to_csv()
     write_to_error_csv()
-    write_to_image_csv()
-    write_to_pricing_csv()
-    write_to_owner_csv()
-    write_to_partner_csv()
+    # write_to_image_csv()
+    # write_to_pricing_csv()
+    # write_to_owner_csv()
+    # write_to_partner_csv()
     try:
         i=1
         filNum =1
         page_num = 147
-        for vin in range(0,page_num):
+        for vin in data:
              
             vin_data = post_vin(vin)
             # print("body_data:",vin_data["Body"])
@@ -82,6 +76,7 @@ def call_vin_decode():
             #    i = 0
             #    output_file_path = output_file_path +"_"+str(filNum)
             #    error_output_file_path = error_output_file_path+"_"+str(filNum)
+            print(i)
             i=i+1
     except Exception as error:
         print(error)
@@ -137,16 +132,17 @@ def post_BB(vin,year,make,model,series):
 
 def write_to_csv(vin="", modelyear="", makename="", modelname="", salvagetype="", bodystylename="", seriesname="", EngineInformation="", cylinders="", FuelTypeDescription="", BaseShippingWeight="", CountryOfOrigin="", SegmentationDescription="", TransmissionDescription="", TransmissionSpeed="", BlackBookWACVValue ="",BlackBookRACVValue ="", Is_Header=True ):
         # print(output_file_path)
-        with open(output_file_path+".csv", mode='a',newline='') as csv_file:
-                fieldnames = ["vin","modelyear","makename","modelname","salvagetype","bodystylename","seriesname","EngineInformation","cylinders","FuelTypeDescription","BaseShippingWeight","CountryOfOrigin","SegmentationDescription","TransmissionDescription","TransmissionSpeed","BlackBook Whole ACV","BlackBook Retail ACV"]
-                
-                writer = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL,dialect='excel-tab')
-                if(not Is_Header):
-                    csv_data= [vin , modelyear , makename , modelname , salvagetype , bodystylename , seriesname , EngineInformation , cylinders , FuelTypeDescription , BaseShippingWeight , CountryOfOrigin , SegmentationDescription , TransmissionDescription , TransmissionSpeed , BlackBookWACVValue,BlackBookRACVValue]
-                    # print(type(csv_data))
-                    writer.writerow(csv_data)
-                if(Is_Header):
-                        writer.writerow(fieldnames)
+        try:
+            with open(output_file_path+".csv", mode='a',newline='') as csv_file:
+                    fieldnames = ["vin","modelyear","makename","modelname","salvagetype","bodystylename","seriesname","EngineInformation","cylinders","FuelTypeDescription","BaseShippingWeight","CountryOfOrigin","SegmentationDescription","TransmissionDescription","TransmissionSpeed","BlackBook Whole ACV","BlackBook Retail ACV"]
+                    
+                    writer = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL,dialect='excel-tab')
+                    if(not Is_Header):
+                        csv_data= [vin , modelyear , makename , modelname , salvagetype , bodystylename , seriesname , EngineInformation , cylinders , FuelTypeDescription , BaseShippingWeight , CountryOfOrigin , SegmentationDescription , TransmissionDescription , TransmissionSpeed , BlackBookWACVValue,BlackBookRACVValue]
+                        # print(type(csv_data))
+                        writer.writerow(csv_data)
+                    if(Is_Header):
+                            writer.writerow(fieldnames)
         except Exception as err:
             print(err)
             pass
@@ -154,55 +150,7 @@ def write_to_csv(vin="", modelyear="", makename="", modelname="", salvagetype=""
             
 
 
-def write_to_pricing_csv(data_id="",discount_days="",discount_percent="",Is_Header=True ):
-        # print(output_file_path)
-        try:
-            with open(price_file_path+'.csv', mode='a') as csv_file:
-                fieldnames = ["data_id","discount_days","discount_percent"]
-                
-                writer = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL,dialect='excel-tab')
-                if(not Is_Header):
-                    csv_data= [data_id,discount_days,discount_percent]
-                    # print(type(csv_data))
-                    writer.writerow(csv_data)
-                if(Is_Header):
-                        writer.writerow(fieldnames)
-        except Exception as err:
-            print(err)
-            pass
-def write_to_owner_csv(data_id="",owner_id="",pretty_id="",uuid="",user_id="",state="",first_name="",last_name_initial="",Is_Header=True ):
-        # print(output_file_path)
-        try:
-            with open(owner_file_path+'.csv', mode='a') as csv_file:
-                fieldnames = ["data_id","owner_id","pretty_id","uuid","user_id","state","first_name","last_name_initial"]
-                
-                writer = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL,dialect='excel-tab')
-                if(not Is_Header):
-                    csv_data= [data_id,owner_id,pretty_id,uuid,user_id,state,first_name,last_name_initial]
-                    # print(type(csv_data))
-                    writer.writerow(csv_data)
-                if(Is_Header):
-                        writer.writerow(fieldnames)
-        except Exception as err:
-            print(err)
-            pass
-        
-def write_to_partner_csv(data_id="",partner_type="",partner_name="",partner_parent_company="",partner_inventory_count="",partner_banner="",Is_Header=True ):
-        # print(output_file_path)
-        try:
-            with open(partner_file_path+'.csv', mode='a') as csv_file:
-                fieldnames = ["data_id","partner_type","partner_name","partner_parent_company","partner_inventory_count","partner_banner"]
-                
-                writer = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL,dialect='excel-tab')
-                if(not Is_Header):
-                    csv_data= [data_id,partner_type,partner_name,partner_parent_company,partner_inventory_count,partner_banner]
-                    # print(type(csv_data))
-                    writer.writerow(csv_data)
-                if(Is_Header):
-                        writer.writerow(fieldnames)
-        except Exception as err:
-            print(err)
-            pass
+
 
 def write_to_error_csv(vin="",Is_Header=True ):
         # print(output_file_path)
@@ -219,6 +167,7 @@ def write_to_error_csv(vin="",Is_Header=True ):
         except Exception as err:
             print(err)
             pass
+
 
 
 readData()
