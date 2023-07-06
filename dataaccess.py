@@ -7,7 +7,7 @@ import time, sys
 
 
 folder_input = 'input/'
-file_path = os.path.join(folder_input, "canadian_vin_list.csv") #TODO: Get as commandline input 
+file_path = os.path.join(folder_input, "RB_VIN_DATA.csv") #TODO: Get as commandline input 
 
 
 csv_data = pd.read_csv(file_path)

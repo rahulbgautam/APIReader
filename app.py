@@ -13,8 +13,8 @@ owner_output_file_path ="owner_data"
 partner_output_file_path = "partner_data"
 
 folder_output = 'output/'
-output_file_path = os.path.join(folder_output, init_csv("Canadian_Data_output"))
-error_output_file_path = os.path.join(folder_output, init_csv("Canadian_Data_Error"))
+output_file_path = os.path.join(folder_output, init_csv("Traveler_Data_output"))
+error_output_file_path = os.path.join(folder_output, init_csv("Traveler_Data_Error"))
 
 def post_vin(vin):
     try:
@@ -26,7 +26,7 @@ def post_vin(vin):
         headers ={'ApplicationId':'Guest','AuthenticationKey':'GuestPwd'}
         # file_name = 'test.png' #File name should be in the same folder where u run the script from
         # upload_index = start_index
-        values = {'vin':vin,'FullDetails':1,'vendor':'IHS'} #Payload would vary for diffrent APIs
+        values = {'vin':vin,'FullDetails':1} #Payload would vary for diffrent APIs
         # multiple_files = [('file', (file_name, open(file_name, 'rb'), 'image/png'))]
         # r = rs.post(url+path, data=values,files=multiple_files)
         # print(url+path)
@@ -55,21 +55,22 @@ def call_vin_decode(data):
     # write_to_partner_csv()
     try:
         i=1
+        
         filNum =1
         page_num = 147
         for vin in data:
-             
-            vin_data = post_vin(vin)
-            # print("body_data:",vin_data["Body"])
-            if len(vin_data["Body"]) > 0:
-                body_data = vin_data["Body"][0]
-                bbdatafin = getBBData(vin,body_data['Model_Year'],body_data['Make'],body_data['Model'],body_data['Series_Name'])
-                wholeacv = (bbdatafin[0])
-                retailacv = (bbdatafin[1])
+            if i > 28078:
+                vin_data = post_vin(vin)
+                # print("body_data:",vin_data["Body"])
+                if len(vin_data["Body"]) > 0:
+                    body_data = vin_data["Body"][0]
+                    bbdatafin = getBBData(vin,body_data['Model_Year'],body_data['Make'],body_data['Model'],body_data['Series_Name'])
+                    wholeacv = (bbdatafin[0])
+                    retailacv = (bbdatafin[1])
 
-                write_to_csv(vin,body_data['Model_Year'],body_data['Make'],body_data['Model'],body_data['Salvage_Type'],body_data['Body_Style_Name'],body_data['Series_Name'],body_data['EngineInformation'],body_data['Cylinders'],body_data['Fuel_Type'],body_data['Base_Shipping_Weight'],body_data['CountryOfOrigin'],body_data['Segmentation_Description'],body_data['Transmission_Type_Description'],body_data['TransmissionSpeed'],wholeacv,retailacv,False)
-            else:
-                write_to_error_csv(vin,False)
+                    write_to_csv(vin,body_data['Model_Year'],body_data['Make'],body_data['Model'],body_data['Salvage_Type'],body_data['Body_Style_Name'],body_data['Series_Name'],body_data['EngineInformation'],body_data['Cylinders'],body_data['Fuel_Type'],body_data['Base_Shipping_Weight'],body_data['CountryOfOrigin'],body_data['Segmentation_Description'],body_data['Transmission_Type_Description'],body_data['TransmissionSpeed'],body_data["Drive_Line_Type"],wholeacv,retailacv,False)
+                else:
+                    write_to_error_csv(vin,False)
             # print(type(body_data['Model_Year']))
             # if(i == 200):
             #    filNum = filNum +1
@@ -130,15 +131,15 @@ def post_BB(vin,year,make,model,series):
     except Exception as error:
         print(error)
 
-def write_to_csv(vin="", modelyear="", makename="", modelname="", salvagetype="", bodystylename="", seriesname="", EngineInformation="", cylinders="", FuelTypeDescription="", BaseShippingWeight="", CountryOfOrigin="", SegmentationDescription="", TransmissionDescription="", TransmissionSpeed="", BlackBookWACVValue ="",BlackBookRACVValue ="", Is_Header=True ):
+def write_to_csv(vin="", modelyear="", makename="", modelname="", salvagetype="", bodystylename="", seriesname="", EngineInformation="", cylinders="", FuelTypeDescription="", BaseShippingWeight="", CountryOfOrigin="", SegmentationDescription="", TransmissionDescription="", TransmissionSpeed="",Drive_Line_Type="", BlackBookWACVValue ="",BlackBookRACVValue ="", Is_Header=True ):
         # print(output_file_path)
         try:
             with open(output_file_path+".csv", mode='a',newline='') as csv_file:
-                    fieldnames = ["vin","modelyear","makename","modelname","salvagetype","bodystylename","seriesname","EngineInformation","cylinders","FuelTypeDescription","BaseShippingWeight","CountryOfOrigin","SegmentationDescription","TransmissionDescription","TransmissionSpeed","BlackBook Whole ACV","BlackBook Retail ACV"]
+                    fieldnames = ["vin","modelyear","makename","modelname","salvagetype","bodystylename","seriesname","EngineInformation","cylinders","FuelTypeDescription","BaseShippingWeight","CountryOfOrigin","SegmentationDescription","TransmissionDescription","TransmissionSpeed","Drive Line Type","BlackBook Whole ACV","BlackBook Retail ACV"]
                     
                     writer = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL,dialect='excel-tab')
                     if(not Is_Header):
-                        csv_data= [vin , modelyear , makename , modelname , salvagetype , bodystylename , seriesname , EngineInformation , cylinders , FuelTypeDescription , BaseShippingWeight , CountryOfOrigin , SegmentationDescription , TransmissionDescription , TransmissionSpeed , BlackBookWACVValue,BlackBookRACVValue]
+                        csv_data= [vin , modelyear , makename , modelname , salvagetype , bodystylename , seriesname , EngineInformation , cylinders , FuelTypeDescription , BaseShippingWeight , CountryOfOrigin , SegmentationDescription , TransmissionDescription , TransmissionSpeed , Drive_Line_Type, BlackBookWACVValue,BlackBookRACVValue]
                         # print(type(csv_data))
                         writer.writerow(csv_data)
                     if(Is_Header):
